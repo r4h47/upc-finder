@@ -85,6 +85,28 @@ export function tokens(text) {
   return out;
 }
 
+const fillerWords = new Set(['value', 'pack', 'pk', 'count', 'ct', 'size', 'family', 'king', 'share', 'single', 'each', 'the', 'and', 'of', 'with']);
+
+/**
+ * Query variants for a search engine that only returns products matching every word:
+ *  1. the full name, 2. name without size/filler words, 3. brand + first product word, 4. OR of the key words.
+ * Results from all of them are merged and ranked by the scorer, so looser variants only add candidates.
+ */
+export function searchVariants(query) {
+  const full = String(query).replace(/\s+/g, ' ').trim();
+  const size = findSizeText(full);
+  const words = (size ? full.replace(size, ' ') : full)
+    .replace(/[’']s\b/gi, '').replace(/&/g, ' ')
+    .split(/\s+/).map((w) => w.replace(/^[^\w-]+|[^\w-]+$/g, ''))
+    .filter((w) => w && !fillerWords.has(w.toLowerCase()) && !/^\d+$/.test(w));
+  const core = words.join(' ');
+  // "Ben & Jerry's" style brands are two words; everything else on a pick screen leads with a one-word brand.
+  const brandLen = /^(ben|dr|mr|mrs|st|la|el)$/i.test(words[0] ?? '') ? 2 : 1;
+  const brandPlus = words.slice(0, brandLen + 1).join(' ');
+  const anyOf = words.length > 1 ? words.join(' OR ') : '';
+  return [...new Set([full, core, brandPlus, anyOf].filter((v) => v && v.split(' ').length >= 1))];
+}
+
 /** Order-insensitive key used to cache a query. */
 export function queryKey(text) {
   const sizes = parseSizes(text).map(sizeToString).sort();

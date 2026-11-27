@@ -1,7 +1,9 @@
 // Online product databases that allow direct browser access (CORS). UPCitemdb and search engines block browsers,
 // so the website offers them as one-tap "search in a new tab" links instead.
 
-const FIELDS = 'code,product_name,brands,quantity,image_front_small_url,image_front_url';
+import { searchVariants } from './text.js';
+
+const FIELDS ='code,product_name,brands,quantity,image_front_small_url,image_front_url';
 
 async function getJson(url, ms = 8000) {
   const ctrl = new AbortController();
@@ -30,25 +32,37 @@ function toHit(p, source) {
   };
 }
 
-function openFacts(host, source, label, fast = false) {
+/** Classic search on Open Beauty / Products Facts (these hosts allow browser requests). */
+function openFacts(host, source, label) {
   return {
     source, label,
     async search(q) {
-      if (fast) {
-        try {
-          const u = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&page_size=20&fields=${FIELDS}`;
-          const hits = ((await getJson(u)).hits ?? []).map((p) => toHit(p, source)).filter(Boolean);
-          if (hits.length) return hits;
-        } catch { /* fall back to the classic search */ }
-      }
       const u = `https://${host}/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=20&fields=${FIELDS}`;
       return ((await getJson(u)).products ?? []).map((p) => toHit(p, source)).filter(Boolean);
     },
   };
 }
 
+/**
+ * Open Food Facts through its search service (search.openfoodfacts.org), the only OFF endpoint that allows
+ * browser requests (world.openfoodfacts.org blocks them). It returns only products containing every word, so
+ * several looser variants of the name are searched in parallel and merged; the scorer ranks the union.
+ */
+const openFoodFacts = {
+  source: 'OPEN_FOOD_FACTS', label: 'Open Food Facts',
+  async search(q) {
+    const results = await Promise.allSettled(searchVariants(q).map((v) =>
+      getJson(`https://search.openfoodfacts.org/search?q=${encodeURIComponent(v)}&page_size=24&fields=${FIELDS}`)));
+    const ok = results.filter((r) => r.status === 'fulfilled');
+    if (!ok.length) throw results[0].reason;
+    const seen = new Set();
+    return ok.flatMap((r) => r.value.hits ?? []).map((p) => toHit(p, 'OPEN_FOOD_FACTS'))
+      .filter((h) => h && !seen.has(h.code) && seen.add(h.code));
+  },
+};
+
 export const providers = [
-  openFacts('world.openfoodfacts.org', 'OPEN_FOOD_FACTS', 'Open Food Facts', true),
+  openFoodFacts,
   openFacts('world.openbeautyfacts.org', 'OPEN_BEAUTY_FACTS', 'Open Beauty Facts'),
   openFacts('world.openproductsfacts.org', 'OPEN_PRODUCTS_FACTS', 'Open Products Facts'),
 ];

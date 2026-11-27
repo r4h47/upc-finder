@@ -42,6 +42,18 @@ test('sizes and tokens', () => {
   assert.equal(Text.queryKey('7-Select Water 20oz'), Text.queryKey('water 7-select 20 OZ'));
 });
 
+// Regression: the live site found nothing because the search service only matches products containing every word.
+test('search variants loosen the query', () => {
+  assert.deepEqual(Text.searchVariants('7-Select Water 20oz'), ['7-Select Water 20oz', '7-Select Water', '7-Select OR Water']);
+  const gum = Text.searchVariants('Trident Spearmint Value Pack Gum 14 Count');
+  assert.ok(gum.includes('Trident Spearmint Gum'), gum.join(' | '));
+  assert.ok(gum.includes('Trident Spearmint'));
+  const bj = Text.searchVariants("Ben & Jerry's Cherry Garcia Pint");
+  assert.ok(bj.includes('Ben Jerry Cherry Garcia'), bj.join(' | '));
+  assert.ok(bj.includes('Ben Jerry Cherry'));
+  assert.ok(Text.searchVariants('7-Select Ultra White Toothbrush 2 Pack').includes('7-Select Ultra White Toothbrush'));
+});
+
 test('scorer: right product beats other flavor; pint matches 473 ml', () => {
   const r = rank('Trident Spearmint Value Pack Gum 14 Count', [
     hit('012345678905', 'Trident Original Flavor Sugar Free Gum', 'Trident', '14 ct'),

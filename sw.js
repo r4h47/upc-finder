@@ -1,5 +1,6 @@
 // Service worker: offline app shell, offline OCR engine after first use, and "Share to UPC Finder".
-const VERSION = 'upc-finder-v1';
+// Bump on every deploy: phones holding an older copy then install the new one and the page reloads once.
+const VERSION = 'upc-finder-v2';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
   'js/app.js', 'js/db.js', 'js/repo.js', 'js/scorer.js', 'js/text.js', 'js/gtin.js', 'js/parser.js', 'js/barcode.js',
