@@ -85,6 +85,25 @@ export function tokens(text) {
   return out;
 }
 
+// 1–2 capital letters standing alone ("QA", "BR", "IR") are glare/bezel artifacts from OCR, not product words.
+// Real short words on 7-Eleven pick screens are kept.
+const keepShort = new Set(['XL', 'OZ', 'CT', 'PK', 'LB', 'ML', 'EA', 'TV', 'UV', 'BB', 'XS', 'L', 'G']);
+export const isJunkWord = (w) => /^[A-Z]{1,2}$/.test(w) && !keepShort.has(w);
+
+/** Removes OCR junk words; also a stray number after the size ("… 14 Count 8"). */
+export function stripJunk(text) {
+  let t = String(text).split(/\s+/).filter((w) => w && !isJunkWord(w)).join(' ');
+  const size = findSizeText(t);
+  if (size) {
+    const at = t.lastIndexOf(size);
+    const tail = t.slice(at + size.length);
+    if (/^\s+\d{1,2}$/.test(tail)) t = t.slice(0, at + size.length);
+  }
+  // A lone leading digit before the brand ("4 Ben & Jerry's") — but never 7-Select's "7".
+  t = t.replace(/^[0-689]\s+(?=[A-Z])/, '');
+  return t.trim();
+}
+
 const fillerWords = new Set(['value', 'pack', 'pk', 'count', 'ct', 'size', 'family', 'king', 'share', 'single', 'each', 'the', 'and', 'of', 'with']);
 
 /**
@@ -93,7 +112,7 @@ const fillerWords = new Set(['value', 'pack', 'pk', 'count', 'ct', 'size', 'fami
  * Results from all of them are merged and ranked by the scorer, so looser variants only add candidates.
  */
 export function searchVariants(query) {
-  const full = String(query).replace(/\s+/g, ' ').trim();
+  const full = stripJunk(String(query).replace(/\s+/g, ' ').trim());
   const size = findSizeText(full);
   const words = (size ? full.replace(size, ' ') : full)
     .replace(/[’']s\b/gi, '').replace(/&/g, ' ')

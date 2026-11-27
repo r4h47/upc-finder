@@ -1,6 +1,6 @@
 // Service worker: offline app shell, offline OCR engine after first use, and "Share to UPC Finder".
 // Bump on every deploy: phones holding an older copy then install the new one and the page reloads once.
-const VERSION = 'upc-finder-v2';
+const VERSION = 'upc-finder-v3';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
   'js/app.js', 'js/db.js', 'js/repo.js', 'js/scorer.js', 'js/text.js', 'js/gtin.js', 'js/parser.js', 'js/barcode.js',
@@ -10,7 +10,11 @@ const SHELL = [
 const ENGINE_HOSTS = ['cdn.jsdelivr.net', 'tessdata.projectnaptha.com'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache: 'reload' bypasses the browser's HTTP cache (GitHub Pages allows 10 min). Without it a new version could
+  // be filled with the previous version's files — which is how the "network error" fix failed to reach phones.
+  e.waitUntil(caches.open(VERSION)
+    .then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -38,7 +42,7 @@ self.addEventListener('fetch', (e) => {
   if (url.origin === self.location.origin) {
     e.respondWith(caches.open(VERSION).then(async (c) => {
       const hit = await c.match(e.request, { ignoreSearch: true });
-      const net = fetch(e.request).then((r) => { if (r.ok) c.put(e.request, r.clone()); return r; }).catch(() => hit);
+      const net = fetch(e.request, { cache: 'no-cache' }).then((r) => { if (r.ok) c.put(e.request, r.clone()); return r; }).catch(() => hit);
       return hit ?? net;
     }));
     return;

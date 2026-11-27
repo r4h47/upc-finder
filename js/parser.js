@@ -1,6 +1,6 @@
 // 7-Eleven pick-screen parser. Port of ScreenTextParser.kt.
 // lines: [{text, left, top, right, bottom}] in image pixels → {name, size, category, productRect, isPickScreen}
-import { findSizeText } from './text.js';
+import { findSizeText, stripJunk } from './text.js';
 
 export const DEFAULT_RECT = { left: 0.2, top: 0.2, right: 0.8, bottom: 0.55 };
 
@@ -109,9 +109,9 @@ export function parse(rawLines, width, height) {
     categoryText = sorted.find((l) => category.test(l.text.trim()))?.text.trim() ?? '';
   }
 
-  const name = nameLines.map((l) => l.text.trim()).join(' ')
+  const name = stripJunk(nameLines.map((l) => l.text.trim()).join(' ')
     .replace(/\s+/g, ' ')
-    .replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9)'’.]+$/g, '');
+    .replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9)'’.]+$/g, ''));
 
   return {
     name,

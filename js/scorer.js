@@ -1,7 +1,7 @@
 // Match Confidence Score. Port of MatchScorer.kt — same weights and rules.
 //  Brand 30 · Title tokens 45 · Size 25; +6 when sources agree; +8 for the 7-Eleven prefix on 7-Select queries;
 //  +4 for a saved pick; web hits capped at 85; brand-only matches capped at 25; product-form words penalized.
-import { tokens, parseSizes, normalize } from './text.js';
+import { tokens, parseSizes, normalize, stripJunk } from './text.js';
 import { key, displayCode, SEVEN_ELEVEN_PREFIX } from './gtin.js';
 
 export const Sources = {
@@ -17,7 +17,8 @@ const variantWords = new Set([
 const toMl = { ml: 1, l: 1000, oz: 29.5735, pint: 473.176, quart: 946.353, gal: 3785.41 };
 const toG = { g: 1, kg: 1000, oz: 28.3495, lb: 453.592 };
 
-export function makeQuery(text) {
+export function makeQuery(raw) {
+  const text = stripJunk(raw);
   const t = tokens(text);
   const norm = normalize(text);
   let brandTokens = [];

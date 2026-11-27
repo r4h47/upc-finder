@@ -659,5 +659,5 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (hadController && !reloaded) { reloaded = true; location.reload(); }
   });
-  navigator.serviceWorker.register('sw.js').then((r) => r.update()).catch(() => {});
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((r) => r.update()).catch(() => {});
 }

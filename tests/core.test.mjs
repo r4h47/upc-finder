@@ -54,6 +54,18 @@ test('search variants loosen the query', () => {
   assert.ok(Text.searchVariants('7-Select Ultra White Toothbrush 2 Pack').includes('7-Select Ultra White Toothbrush'));
 });
 
+// Real OCR names from the live site that showed "No UPC found online".
+test('OCR junk words are stripped', () => {
+  assert.equal(Text.stripJunk("QA Ben & Jerry's Cherry Garcia"), "Ben & Jerry's Cherry Garcia");
+  assert.equal(Text.stripJunk('Trident Spearmint Value BR Pack Gum 14 Count 8'), 'Trident Spearmint Value Pack Gum 14 Count');
+  assert.equal(Text.stripJunk('7-Select Ultra White IR Toothbrush 2 Pack'), '7-Select Ultra White Toothbrush 2 Pack');
+  assert.equal(Text.stripJunk("4 Ben & Jerry's Cherry Garcia"), "Ben & Jerry's Cherry Garcia");
+  assert.equal(Text.stripJunk('7 Select Water 20oz'), '7 Select Water 20oz');
+  assert.equal(Text.stripJunk('Monster Energy XL 24 OZ'), 'Monster Energy XL 24 OZ');
+  assert.equal(makeQuery("QA Ben & Jerry's Cherry Garcia").brandTokens.join(' '), 'ben jerry');
+  assert.ok(Text.searchVariants('Trident Spearmint Value BR Pack Gum 14 Count 8').includes('Trident Spearmint Gum'));
+});
+
 test('scorer: right product beats other flavor; pint matches 473 ml', () => {
   const r = rank('Trident Spearmint Value Pack Gum 14 Count', [
     hit('012345678905', 'Trident Original Flavor Sugar Free Gum', 'Trident', '14 ct'),
