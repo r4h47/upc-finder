@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>UPC Finder</title>
+  <meta name="description" content="Photo of a 7-Eleven pick screen → scannable UPC barcode. On-device OCR, offline history, your own saved barcodes.">
+  <meta name="theme-color" content="#0B0F14">
+  <meta name="color-scheme" content="dark">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <main id="app" aria-live="polite"></main>
+
+  <!-- Product barcode scanner -->
+  <div class="overlay" id="scanner" hidden role="dialog" aria-modal="true" aria-label="Scan product barcode">
+    <video id="scanVideo" muted playsinline></video>
+    <div class="scanwin" aria-hidden="true"></div>
+    <div class="hint"><span id="scanHint">Point at the barcode on the product</span></div>
+    <div class="controls">
+      <button class="icon-btn" data-act="scan-close" aria-label="Close scanner"></button>
+      <button class="btn btn-secondary grow" data-act="scan-type"></button>
+      <button class="icon-btn" data-act="scan-torch" aria-label="Turn torch on" hidden></button>
+    </div>
+  </div>
+
+  <!-- Full-screen white barcode for the store scanner -->
+  <div class="full" id="full" hidden role="dialog" aria-modal="true" aria-label="Full screen barcode">
+    <button class="icon-btn" data-act="full-close" aria-label="Close full screen barcode"></button>
+    <canvas id="fullCanvas"></canvas>
+    <div class="digits" id="fullDigits"></div>
+    <div class="title" id="fullTitle"></div>
+  </div>
+
+  <dialog class="sheet" id="sheet" aria-labelledby="sheetTitle"></dialog>
+
+  <div class="snackbar" id="snackbar" hidden role="status">
+    <span class="msg"></span><button type="button" hidden></button>
+  </div>
+
+  <input type="file" id="pickCamera" accept="image/*" capture="environment" hidden>
+  <input type="file" id="pickGallery" accept="image/*" hidden>
+
+  <noscript><p style="padding:16px">UPC Finder needs JavaScript.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
